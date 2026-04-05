@@ -2,8 +2,8 @@ import apiClient from './client';
 import { Podcast } from '../types';
 
 export const podcastsApi = {
-    getAll: () =>
-        apiClient.get('/podcasts').then(r => r.data),
+    getAll: (params?: any) =>
+        apiClient.get('/podcasts', { params }).then(r => r.data),
 
     getOne: (id: string) =>
         apiClient.get(`/podcasts/${id}`).then(r => r.data),
@@ -16,4 +16,16 @@ export const podcastsApi = {
 
     delete: (id: string) =>
         apiClient.delete(`/podcasts/${id}`).then(r => r.data),
+
+    getLikes: (id: string) =>
+        apiClient.get(`/podcasts/${id}/likes`).then(r => r.data),
+
+    getComments: (id: string) =>
+        apiClient.get(`/podcasts/${id}/comments`).then(r => r.data),
+
+    getPlays: (id: string) =>
+        apiClient.get(`/podcasts/${id}/plays`).then(r => r.data),
+
+    play: (id: string) =>
+        apiClient.post(`/podcasts/${id}/play`).then(r => r.data),
 };

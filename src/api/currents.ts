@@ -16,4 +16,16 @@ export const currentsApi = {
 
     delete: (id: string) =>
         apiClient.delete(`/currents/${id}`).then(r => r.data),
+
+    getLikes: (id: string) =>
+        apiClient.get(`/currents/${id}/likes`).then(r => r.data),
+
+    getShares: (id: string) =>
+        apiClient.get(`/currents/${id}/shares`).then(r => r.data),
+
+    getViews: (id: string) =>
+        apiClient.get(`/currents/${id}/views`).then(r => r.data),
+
+    getComments: (id: string) =>
+        apiClient.get(`/currents/${id}/comments`).then(r => r.data),
 };

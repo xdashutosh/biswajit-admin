@@ -2,8 +2,8 @@ import apiClient from './client';
 import { Letter } from '../types';
 
 export const lettersApi = {
-    getAll: () =>
-        apiClient.get('/letters').then(r => r.data),
+    getAll: (params?: any) =>
+        apiClient.get('/letters', { params }).then(r => r.data),
 
     getOne: (id: string) =>
         apiClient.get(`/letters/${id}`).then(r => r.data),

@@ -2,8 +2,11 @@ import apiClient from './client';
 import { Poll } from '../types';
 
 export const pollsApi = {
-    getAll: () =>
-        apiClient.get('/polls').then(r => r.data),
+    getAll: (params?: any) =>
+        apiClient.get('/polls', { params }).then(r => r.data),
+
+    getVotes: (id: string) =>
+        apiClient.get(`/polls/${id}/votes`).then(r => r.data),
 
     getPast: () =>
         apiClient.get('/polls/past').then(r => r.data),

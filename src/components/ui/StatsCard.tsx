@@ -4,28 +4,38 @@ interface StatsCardProps {
     label: string;
     value: string | number;
     icon: ReactNode;
-    gradient: string;
+    color?: 'blue' | 'emerald' | 'orange' | 'indigo' | 'rose' | 'amber';
     change?: string;
+    trend?: 'up' | 'down';
 }
 
-export default function StatsCard({ label, value, icon, gradient, change }: StatsCardProps) {
+const colorMap = {
+    blue: 'bg-blue-50 text-blue-600 border-blue-100',
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    orange: 'bg-orange-50 text-orange-600 border-orange-100',
+    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    rose: 'bg-rose-50 text-rose-600 border-rose-100',
+    amber: 'bg-amber-50 text-amber-600 border-amber-100',
+};
+
+export default function StatsCard({ label, value, icon, color = 'blue', change, trend = 'up' }: StatsCardProps) {
+    const colorStyles = colorMap[color] || colorMap.blue;
+
     return (
-        <div className={`${gradient} rounded-2xl p-5 text-white relative overflow-hidden group hover:scale-[1.02] transition-transform duration-300`}>
-            <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-white/10 -translate-y-6 translate-x-6 group-hover:scale-110 transition-transform duration-500" />
-            <div className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-white/5 translate-y-4 -translate-x-4" />
-            <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                        {icon}
-                    </div>
-                    {change && (
-                        <span className="text-xs bg-white/20 px-2 py-1 rounded-lg font-medium">
-                            {change}
-                        </span>
-                    )}
+        <div className="executive-card p-6 flex flex-col justify-between h-full group">
+            <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 rounded-2xl ${colorStyles.split(' ')[0]} ${colorStyles.split(' ')[1]} border ${colorStyles.split(' ')[2]} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                    {icon}
                 </div>
-                <p className="text-2xl font-bold">{value}</p>
-                <p className="text-sm text-white/70 mt-1">{label}</p>
+                {change && (
+                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${trend === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                        {trend === 'up' ? '↑' : '↓'} {change}
+                    </div>
+                )}
+            </div>
+            <div>
+                <p className="text-3xl font-black text-slate-900 tracking-tight tabular-nums">{value}</p>
+                <p className="text-sm font-semibold text-slate-500 mt-1 uppercase tracking-wider">{label}</p>
             </div>
         </div>
     );

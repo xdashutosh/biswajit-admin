@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { currentsApi } from '../../api/currents';
-import MediaPreview from '../../components/ui/MediaPreview';
+import FileUpload from '../../components/ui/FileUpload';
 import toast from 'react-hot-toast';
 
 interface CurrentFormData { title: string; description: string; video_url: string; thumbnail_url: string; }
@@ -10,7 +10,7 @@ interface CurrentFormData { title: string; description: string; video_url: strin
 export default function CurrentFormPage() {
     const { id } = useParams(); const isEdit = Boolean(id); const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<CurrentFormData>();
+    const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CurrentFormData>();
 
     const videoUrl = watch('video_url');
     const thumbnailUrl = watch('thumbnail_url');
@@ -21,7 +21,18 @@ export default function CurrentFormPage() {
 
     const onSubmit = async (data: CurrentFormData) => {
         setLoading(true);
-        try { if (isEdit && id) { await currentsApi.update(id, data); toast.success('Updated'); } else { await currentsApi.create(data); toast.success('Created'); } navigate('/currents'); } catch { toast.error('Failed to save'); }
+        try { 
+            if (isEdit && id) { 
+                await currentsApi.update(id, data); 
+                toast.success('Updated'); 
+            } else { 
+                await currentsApi.create(data); 
+                toast.success('Created'); 
+            } 
+            navigate('/currents'); 
+        } catch { 
+            toast.error('Failed to save'); 
+        }
         setLoading(false);
     };
 
@@ -59,36 +70,44 @@ export default function CurrentFormPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-slate-700 tracking-tight">Video Source URL <span className="text-rose-500">*</span></label>
+                        <div className="space-y-3">
+                            <label className="block text-sm font-bold text-slate-700 tracking-tight">Video Source (URL or Upload) <span className="text-rose-500">*</span></label>
                             <input
                                 {...register('video_url', { required: 'Video URL is required' })}
                                 className="w-full px-5 py-4 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/5 transition-all outline-none shadow-sm"
-                                placeholder="https://youtube.com/... or direct link"
+                                placeholder="Paste link or upload below..."
                             />
                             {errors.video_url && <p className="text-xs text-rose-500 font-bold mt-1">{errors.video_url.message}</p>}
+                            <div className="flex items-center gap-4 my-2">
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">OR</span>
+                                <div className="h-px bg-slate-200 flex-1"></div>
+                            </div>
+                            <FileUpload
+                                label="Upload Video Direct to S3"
+                                onUploadComplete={(url) => {
+                                    reset({ ...watch(), video_url: url });
+                                }}
+                                currentFileUrl=""
+                                folder="currents/videos"
+                                accept="video/*"
+                            />
                         </div>
                         {videoUrl && (
-                            <div className="p-1 bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
-                                <MediaPreview url={videoUrl} type="video" className="h-44 rounded-xl" />
+                            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
+                                <p className="text-xs font-bold text-slate-500 truncate">{videoUrl}</p>
                             </div>
                         )}
                     </div>
 
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-slate-700 tracking-tight">Custom Thumbnail URL</label>
-                            <input
-                                {...register('thumbnail_url')}
-                                className="w-full px-5 py-4 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/5 transition-all outline-none shadow-sm"
-                                placeholder="https://..."
-                            />
-                        </div>
-                        {thumbnailUrl && (
-                            <div className="p-1 bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
-                                <MediaPreview url={thumbnailUrl} type="image" className="h-44 rounded-xl" />
-                            </div>
-                        )}
+                        <FileUpload
+                            label="Custom Thumbnail Image"
+                            onUploadComplete={(url) => setValue('thumbnail_url', url)}
+                            currentFileUrl={thumbnailUrl}
+                            folder="currents/thumbnails"
+                            accept="image/*"
+                        />
                     </div>
                 </div>
 

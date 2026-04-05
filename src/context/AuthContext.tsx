@@ -2,23 +2,27 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import apiClient from '../api/client';
 import { ApiResponse } from '../types';
 
-interface AdminUser {
-    user_id: number;
-    user_name: string;
+export interface Employee {
+    id: string;
+    name: string;
     email: string;
-    role_id: number;
+    role_id: string;
+    role_name: string;
+    is_super_admin: boolean;
+    permissions: Record<string, { can_create: boolean; can_read: boolean; can_update: boolean; can_delete: boolean }>;
 }
 
 interface LoginData {
     token: string;
-    user: AdminUser;
+    employee: Employee;
 }
 
 interface AuthContextType {
-    user: AdminUser | null;
+    user: Employee | null;
     isAuthenticated: boolean;
+    isSuperAdmin: boolean;
     isAdmin: boolean;
-    isEditor: boolean;
+    hasPermission: (module: string, action: 'can_create' | 'can_read' | 'can_update' | 'can_delete') => boolean;
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => void;
 }
@@ -26,7 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<AdminUser | null>(null);
+    const [user, setUser] = useState<Employee | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -48,10 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const response = await apiClient.post<ApiResponse<LoginData>>('/auth/login/admin', { email, password });
 
             if (response.data.status === 'success') {
-                const { token, user: userData } = response.data.data;
+                const { token, employee: employeeData } = response.data.data;
                 localStorage.setItem('admin_token', token);
-                localStorage.setItem('admin_user', JSON.stringify(userData));
-                setUser(userData);
+                // Also setting regular token for standard requests if needed
+                localStorage.setItem('token', token); 
+                localStorage.setItem('admin_user', JSON.stringify(employeeData));
+                setUser(employeeData);
                 return true;
             }
             return false;
@@ -63,21 +69,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = () => {
         localStorage.removeItem('admin_token');
+        localStorage.removeItem('token');
         localStorage.removeItem('admin_user');
         setUser(null);
     };
 
-    // Based on user provided example, 0 seems to be Admin
-    // In types/index.ts, 1 is Admin. I will check for both or follow the API example.
-    const isAdmin = user?.role_id === 0 || user?.role_id === 1;
-    const isEditor = user?.role_id === 2;
+    const isSuperAdmin = user?.is_super_admin || false;
+    const isAdmin = isSuperAdmin || (user?.role_name === 'Admin');
+
+    const hasPermission = (module: string, action: 'can_create' | 'can_read' | 'can_update' | 'can_delete') => {
+        if (!user) return false;
+        if (user.is_super_admin) return true;
+        
+        const modPerms = user.permissions?.[module];
+        if (!modPerms) return false;
+        
+        return modPerms[action] === true;
+    };
 
     return (
         <AuthContext.Provider value={{
             user,
             isAuthenticated: !!user,
+            isSuperAdmin,
             isAdmin,
-            isEditor,
+            hasPermission,
             login,
             logout
         }}>
@@ -91,3 +107,4 @@ export function useAuth() {
     if (!context) throw new Error('useAuth must be used within AuthProvider');
     return context;
 }
+

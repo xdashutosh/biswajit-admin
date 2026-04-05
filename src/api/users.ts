@@ -16,4 +16,10 @@ export const usersApi = {
 
     delete: (id: number) =>
         apiClient.delete(`/users/${id}`).then(r => r.data),
+
+    getEngagement: (id: number) =>
+        apiClient.get(`/users/${id}/engagement`).then(r => r.data),
+
+    getPointsHistory: (id: number) =>
+        apiClient.get(`/users/${id}/points`).then(r => r.data),
 };

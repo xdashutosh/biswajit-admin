@@ -16,6 +16,14 @@ export default {
                     800: '#9a3412',
                     900: '#7c2d12',
                 },
+                executive: {
+                    navy: '#0f172a',    // Slate-900 equivalent
+                    blue: '#1e40af',    // Blue-800
+                    azure: '#0369a1',   // Cyan-700
+                    teal: '#0d9488',    // Teal-600
+                    slate: '#64748b',   // Slate-500
+                    bg: '#f8fafc',      // Slate-50
+                },
                 slate: {
                     50: '#f8fafc',
                     100: '#f1f5f9',
@@ -29,14 +37,15 @@ export default {
                     900: '#0f172a',
                 },
                 accent: {
-                    primary: '#f97316', // Orange-500
-                    hover: '#ea580c',   // Orange-600
-                    light: '#ffedd5',   // Orange-100
-                    dark: '#c2410c',    // Orange-700
+                    primary: '#0369a1', // Azure
+                    hover: '#075985',   // Azure-dark
+                    light: '#e0f2fe',   // Azure-50
+                    dark: '#1e3a8a',    // Navy
                 },
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                sans: ['Inter', 'Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+                display: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
             },
             animation: {
                 'fade-in': 'fadeIn 0.3s ease-out',

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineVideoCamera, HiOutlineMagnifyingGlass } from 'react-icons/hi2';
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineVideoCamera, HiOutlineMagnifyingGlass, HiOutlineEye } from 'react-icons/hi2';
 import { currentsApi } from '../../api/currents';
 import { Current } from '../../types';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -8,6 +8,10 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import toast from 'react-hot-toast';
+import ViewDetailsModal from '../../components/ui/ViewDetailsModal';
+import EngagementModal from '../../components/ui/EngagementModal';
+import CommentsModal from '../../components/ui/CommentsModal';
+
 
 export default function CurrentsListPage() {
     const [items, setItems] = useState<Current[]>([]);
@@ -16,7 +20,14 @@ export default function CurrentsListPage() {
     const [page, setPage] = useState(0);
     const [total, setTotal] = useState(0);
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [viewItem, setViewItem] = useState<Current | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [engagementModalOpen, setEngagementModalOpen] = useState(false);
+    const [engagementModalType, setEngagementModalType] = useState<'likes' | 'shares' | 'views'>('likes');
+    const [engagementItem, setEngagementItem] = useState<Current | null>(null);
+    const [commentsModalOpen, setCommentsModalOpen] = useState(false);
+    const [commentsItem, setCommentsItem] = useState<Current | null>(null);
+
     const limit = 10;
 
     useEffect(() => { loadData(); }, [page, search]);
@@ -55,8 +66,7 @@ export default function CurrentsListPage() {
                             <tr className="border-b border-slate-100 bg-slate-50/50">
                                 <th className="text-left px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Video Content</th>
                                 <th className="text-left px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Visibility</th>
-                                <th className="text-left px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Engagement (Likes)</th>
-                                <th className="text-left px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Reach (Shares)</th>
+                                <th className="text-left px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Stats</th>
                                 <th className="text-right px-6 py-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Actions</th>
                             </tr>
                         </thead>
@@ -69,22 +79,77 @@ export default function CurrentsListPage() {
                                 items.map((item) => (
                                     <tr key={item.id} className="border-b border-slate-50 hover:bg-brand-50/30 transition-colors group">
                                         <td className="px-6 py-4">
-                                            <div className="max-w-[280px]">
-                                                <p className="text-sm font-bold text-slate-800 group-hover:text-brand-600 transition-all truncate">{item.title}</p>
-                                                <p className="text-[11px] text-slate-500 font-medium truncate">{item.description}</p>
+                                            <div className="flex items-center gap-4">
+                                                <div className="relative w-20 h-12 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shrink-0 group/thumb cursor-pointer" onClick={() => setViewItem(item)}>
+                                                    {item.thumbnail_url ? (
+                                                        <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover transition-transform group-hover/thumb:scale-110" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                                                            <HiOutlineVideoCamera className="w-5 h-5 text-slate-400" />
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/20 group-hover/thumb:bg-black/40 transition-colors flex items-center justify-center">
+                                                        <div className="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center shadow-lg transition-transform group-hover/thumb:scale-110">
+                                                            <div className="w-0 h-0 border-t-[4px] border-t-transparent border-l-[7px] border-l-brand-600 border-b-[4px] border-b-transparent ml-0.5" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="max-w-[280px] min-w-0">
+                                                    <p className="text-sm font-bold text-slate-800 group-hover:text-brand-600 transition-all truncate">{item.title}</p>
+                                                    <p className="text-[11px] text-slate-500 font-medium truncate">{item.description}</p>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <StatusBadge status={item.is_published ? 'Published' : 'Draft'} />
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-black text-slate-700 font-mono italic">
-                                            {item.likes?.toLocaleString() || 0}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-black text-slate-700 font-mono italic">
-                                            {item.shares_count?.toLocaleString() || 0}
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <button onClick={() => {
+                                                    setEngagementItem(item);
+                                                    setEngagementModalType('views');
+                                                    setEngagementModalOpen(true);
+                                                }} className="text-center group hover:bg-emerald-50 p-1.5 -m-1.5 rounded-lg transition-colors">
+                                                    <div className="text-sm font-black text-slate-700 group-hover:text-emerald-600 font-mono transition-colors">{item.views_count ?? 0}</div>
+                                                    <div className="text-[9px] text-slate-400 group-hover:text-emerald-500 font-bold uppercase tracking-widest transition-colors">Views</div>
+                                                </button>
+                                                <div className="w-px h-6 bg-slate-100" />
+                                                <button onClick={() => {
+                                                    setEngagementItem(item);
+                                                    setEngagementModalType('likes');
+                                                    setEngagementModalOpen(true);
+                                                }} className="text-center group hover:bg-rose-50 p-1.5 -m-1.5 rounded-lg transition-colors">
+                                                    <div className="text-sm font-black text-slate-700 group-hover:text-rose-600 font-mono transition-colors">{item.likes ?? 0}</div>
+                                                    <div className="text-[9px] text-slate-400 group-hover:text-rose-500 font-bold uppercase tracking-widest transition-colors">Likes</div>
+                                                </button>
+                                                <div className="w-px h-6 bg-slate-100" />
+                                                <button onClick={() => {
+                                                    setEngagementItem(item);
+                                                    setEngagementModalType('shares');
+                                                    setEngagementModalOpen(true);
+                                                }} className="text-center group hover:bg-blue-50 p-1.5 -m-1.5 rounded-lg transition-colors">
+                                                    <div className="text-sm font-black text-slate-700 group-hover:text-blue-600 font-mono transition-colors">{item.shares_count ?? 0}</div>
+                                                    <div className="text-[9px] text-slate-400 group-hover:text-blue-500 font-bold uppercase tracking-widest transition-colors">Shares</div>
+                                                </button>
+                                                <div className="w-px h-6 bg-slate-100" />
+                                                <button onClick={() => {
+                                                    setCommentsItem(item);
+                                                    setCommentsModalOpen(true);
+                                                }} className="text-center group hover:bg-orange-50 p-1.5 -m-1.5 rounded-lg transition-colors">
+                                                    <div className="text-sm font-black text-slate-700 group-hover:text-orange-600 font-mono transition-colors">{item.comments_count ?? 0}</div>
+                                                    <div className="text-[9px] text-slate-400 group-hover:text-orange-500 font-bold uppercase tracking-widest transition-colors">Comments</div>
+                                                </button>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => setViewItem(item)}
+                                                    className="p-2.5 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all active:scale-95"
+                                                    title="View Details"
+                                                >
+                                                    <HiOutlineEye className="w-5 h-5" />
+                                                </button>
                                                 <Link
                                                     to={`/currents/edit/${item.id}`}
                                                     className="p-2.5 rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all active:scale-95"
@@ -101,6 +166,7 @@ export default function CurrentsListPage() {
                                                 </button>
                                             </div>
                                         </td>
+
                                     </tr>
                                 ))
                             )}
@@ -133,6 +199,35 @@ export default function CurrentsListPage() {
                 )}
             </div>
             <ConfirmDialog isOpen={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={handleDelete} loading={deleting} />
+
+            <ViewDetailsModal
+                isOpen={!!viewItem}
+                onClose={() => setViewItem(null)}
+                title="Current Affairs Details"
+                data={viewItem}
+            />
+
+            <EngagementModal 
+                isOpen={engagementModalOpen} 
+                onClose={() => { setEngagementModalOpen(false); setEngagementItem(null); }} 
+                itemId={engagementItem?.id || null}
+                type={engagementModalType}
+                title={engagementItem?.title || ''}
+                fetchData={(id, type) => {
+                    if (type === 'likes') return currentsApi.getLikes(id);
+                    if (type === 'shares') return currentsApi.getShares(id);
+                    return currentsApi.getViews(id);
+                }}
+            />
+
+            <CommentsModal 
+                isOpen={commentsModalOpen} 
+                onClose={() => { setCommentsModalOpen(false); setCommentsItem(null); }} 
+                itemId={commentsItem?.id || null}
+                title={commentsItem?.title || ''}
+                fetchData={(id) => currentsApi.getComments(id)}
+            />
         </div>
+
     );
 }

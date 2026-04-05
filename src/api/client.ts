@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-export const BASE_URL = 'https://backend.biswajitdaimary.in/';
+export const BASE_URL = 'http://localhost:5008/';
+// export const BASE_URL = 'https://backend.biswajitdaimary.in/';
 
 const apiClient = axios.create({
     baseURL: BASE_URL,

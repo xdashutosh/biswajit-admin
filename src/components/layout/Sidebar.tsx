@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     HiOutlineHome,
     HiOutlineNewspaper,
     HiOutlineBriefcase,
+    HiOutlineDocumentText,
     HiOutlineVideoCamera,
     HiOutlineEnvelope,
     HiOutlineMicrophone,
@@ -12,20 +12,40 @@ import {
     HiOutlineBuildingOffice,
     HiOutlineUsers,
     HiOutlineCog6Tooth,
-    HiOutlineChevronLeft,
-    HiOutlineChevronRight,
+    HiOutlineExclamationCircle,
+    HiOutlineShieldExclamation,
+    HiOutlineSparkles,
+    HiOutlineLightBulb,
+    HiOutlineCircleStack,
+    HiOutlineGift,
+    HiOutlineCalendarDays,
+    HiOutlineIdentification,
+    HiOutlineUserGroup,
+    HiOutlineGlobeAlt,
 } from 'react-icons/hi2';
 
 const navItems = [
-    { label: 'Dashboard', icon: HiOutlineHome, path: '/' },
-    { label: 'News', icon: HiOutlineNewspaper, path: '/news' },
-    { label: 'Jobs', icon: HiOutlineBriefcase, path: '/jobs' },
-    { label: 'Currents', icon: HiOutlineVideoCamera, path: '/currents' },
-    { label: 'Letters', icon: HiOutlineEnvelope, path: '/letters' },
-    { label: 'Podcasts', icon: HiOutlineMicrophone, path: '/podcasts' },
-    { label: 'Polls', icon: HiOutlineChartBar, path: '/polls' },
-    { label: 'Projects', icon: HiOutlineBuildingOffice, path: '/projects' },
-    { label: 'Users', icon: HiOutlineUsers, path: '/users', adminOnly: true },
+    { label: 'Dashboard', icon: HiOutlineHome, path: '/', module: 'dashboard' },
+    { label: 'News', icon: HiOutlineNewspaper, path: '/news', module: 'news' },
+    { label: 'Jobs', icon: HiOutlineBriefcase, path: '/jobs', module: 'jobs' },
+    { label: 'Job Applications', icon: HiOutlineDocumentText, path: '/jobs/applications', module: 'jobs' },
+    { label: 'Currents', icon: HiOutlineVideoCamera, path: '/currents', module: 'currents' },
+    { label: 'Letters', icon: HiOutlineEnvelope, path: '/letters', module: 'letters' },
+    { label: 'Podcasts', icon: HiOutlineMicrophone, path: '/podcasts', module: 'podcasts' },
+    { label: 'Polls', icon: HiOutlineChartBar, path: '/polls', module: 'polls' },
+    { label: 'Projects', icon: HiOutlineBuildingOffice, path: '/projects', module: 'projects' },
+    { label: 'Complaints', icon: HiOutlineExclamationCircle, path: '/complaints', module: 'complaints' },
+    { label: 'Fake News', icon: HiOutlineShieldExclamation, path: '/fake-news', module: 'fake_news' },
+    { label: 'Green Challenges', icon: HiOutlineSparkles, path: '/green', module: 'green_challenges' },
+    { label: 'Ideas', icon: HiOutlineLightBulb, path: '/ideas', module: 'ideas' },
+    { label: 'Master Data', icon: HiOutlineCircleStack, path: '/master', module: 'master_data' },
+    { label: 'Rewards', icon: HiOutlineGift, path: '/rewards', module: 'rewards' },
+    { label: 'Youth Events', icon: HiOutlineCalendarDays, path: '/youth/events', module: 'youth_events' },
+    { label: 'Youth Interns', icon: HiOutlineBriefcase, path: '/youth/internships', module: 'youth_internships' },
+    { label: 'Social Metrics', icon: HiOutlineGlobeAlt, path: '/social', module: 'rewards' },
+    { label: 'Users', icon: HiOutlineUsers, path: '/users', module: 'users' },
+    { label: 'Roles', icon: HiOutlineIdentification, path: '/roles', module: 'roles' },
+    { label: 'Employees', icon: HiOutlineUserGroup, path: '/employees', module: 'employees' },
 ];
 
 interface SidebarProps {
@@ -34,12 +54,15 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
-    const { isAdmin } = useAuth();
+    const { isSuperAdmin, hasPermission } = useAuth();
     const location = useLocation();
 
-    const filteredNavItems = navItems.filter(item => !item.adminOnly || isAdmin);
+    // Filter items based on whether user has 'can_read' permissions for that module
+    const filteredNavItems = navItems.filter(item => 
+        isSuperAdmin || hasPermission(item.module, 'can_read')
+    );
 
-    const renderNavLink = (item: { label: string; icon: any; path: string }) => {
+    const renderNavLink = (item: { label: string; icon: any; path: string; module?: string }) => {
         const isActive =
             item.path === '/'
                 ? location.pathname === '/'
@@ -94,9 +117,11 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
             </nav>
 
             {/* Bottom Section */}
-            <div className="px-3 pb-6 pt-4 border-t border-slate-100">
-                {renderNavLink({ label: 'Settings', icon: HiOutlineCog6Tooth, path: '/settings' })}
-            </div>
+            {(isSuperAdmin || hasPermission('settings', 'can_read')) && (
+                <div className="px-3 pb-6 pt-4 border-t border-slate-100">
+                    {renderNavLink({ label: 'Settings', icon: HiOutlineCog6Tooth, path: '/settings', module: 'settings' })}
+                </div>
+            )}
         </aside>
     );
 }
